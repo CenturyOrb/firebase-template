@@ -2,24 +2,23 @@
 	Useful links:
 		- https://firebase.google.com/docs/auth/web/password-auth?authuser=0#web
 		- https://firebase.google.com/docs/auth/web/start?authuser=0
+		- https://firebase.google.com/docs/auth/web/google-signin
 */
 
 import './App.css'
 import { useState, useRef, useEffect } from 'react'
 import FirebaseWebApp from './config/firebase-config.js'
 import { getAuth, 
-		createUserWithEmailAndPassword,
-		signInWithEmailAndPassword,
+		GoogleAuthProvider,
+		signInWithPopup,
 		signOut,
 		onAuthStateChanged } from "firebase/auth";
 
 const auth = getAuth(FirebaseWebApp);
+const googleProvider = new GoogleAuthProvider();
 	
 function App() {
 	const [appUser, setAppUser] = useState(null);
-	const [email, setEmail] = useState('');	
-	const [password, setPassword] = useState('');
-	const createAccountButton = useRef(null);
 	const signInButton = useRef(null);
 	const signOutButton = useRef(null);
 
@@ -38,36 +37,14 @@ function App() {
 		console.log(appUser);
 	}, [appUser]);
 
-	const handleCreateAccount = async () => {
-		// implement functionality to create account with firebase auth
-		// remember to set password policy in firebase console
-
-		// (1) make a validatePassword() function in firebase-utils.js etc that
-		// validates password on account creation (should be === to password policy)
-		// didn't do that in this example
-		if (!email || !password) return;
-	
-		// (2) create new user with email and password given 
-		try {
-			createUserWithEmailAndPassword(auth, email, password);
-			console.log('Created a new account lets goo');
-		} catch (error) { console.error(error.message) }
-		finally {
-			setEmail('');
-			setPassword('');
-		}
-	}
-
 	const handleSignIn = async () => {
     	// implement functionality to sign in with firebase auth
     	try {
-    		await signInWithEmailAndPassword(auth, email, password);
+    		const result = await signInWithPopup(auth, googleProvider);
+			const cred = GoogleAuthProvider.credentialFromResult(result);
+			console.log(auth.currentUser.uid);
 			console.log('Signed in yayayayay!');
-    	} catch (error) { console.error(error.message) }
-    	finally {
-    		setEmail('');
-    		setPassword('');
-    	}
+    	} catch (error) { console.error(error) }
     }
 
 	const handleSignOut = async () => {
@@ -80,19 +57,6 @@ function App() {
 
   	return (
   	  <div className="App">
-  	  	<input 
-			type='email'
-			value={email} 
-			placeholder='Email...' 
-			onChange={ (event) => setEmail(event.target.value) }
-		/>
-  	  	<input 
-			type='password'
-			value={password} 
-			placeholder='Password...' 
-			onChange={ (event) => setPassword(event.target.value) }
-		/>
-		<button ref={createAccountButton} onClick={handleCreateAccount}>Create Account</button>
 		<button ref={signInButton} onClick={handleSignIn}>Sign In</button>
 		<button ref={signOutButton} onClick={handleSignOut}>Sign Out</button>
   	  </div>
